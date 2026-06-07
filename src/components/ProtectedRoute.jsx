@@ -1,10 +1,11 @@
 import { Navigate, Outlet } from 'react-router-dom'
-import { useAuth } from '../context/useAuth.jsx'
+import { useAuth } from '../context/useAuth'
 
 export default function ProtectedRoute() {
-  const { user, loading } = useAuth()
+  const { session } = useAuth()
 
-  if (loading) {
+  // Still loading (undefined = not yet checked)
+  if (session === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -15,10 +16,11 @@ export default function ProtectedRoute() {
     )
   }
 
-  if (!user) {
+  // Not logged in
+  if (!session) {
     return <Navigate to="/admin/login" replace />
   }
 
-  // Outlet renders the matched child route (Dashboard, Appointments, etc.)
+  // Logged in — render child route
   return <Outlet />
 }

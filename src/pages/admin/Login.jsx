@@ -28,40 +28,40 @@ export default function Login() {
     <div className="min-h-screen flex"
       style={{ background: 'linear-gradient(135deg, #3a0a18 0%, #5a0000 50%, #8B0000 100%)' }}
     >
-      {/* ── Left panel — branding ─────────────────────── */}
+      {/* Left panel — branding */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 px-16 py-14 border-r border-white/10">
 
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-4">
+        {/* Logo — no link */}
+        <div className="flex items-center gap-4">
           <img src="/pup-logo.png" alt="PUP"
             className="w-14 h-14 object-contain drop-shadow-lg"
             onError={e => { e.target.style.display = 'none' }} />
           <div className="border-l border-gold/40 pl-4">
-            <p className="font-display text-white text-xl font-semibold leading-none">PUP Clinic</p>
-            <p className="text-gold text-xs font-mono tracking-widest uppercase mt-1">Health Services Office</p>
+            <p className="text-white text-xl font-semibold leading-none">PUPCare Clinic</p>
+            <p className="text-gold text-xs tracking-widest uppercase mt-1">Health Services Office</p>
           </div>
-        </Link>
+        </div>
 
         {/* Center quote */}
         <div>
-          <div className="w-1 h-16 bg-gold-gradient mb-6" />
-          <h2 className="font-display text-5xl text-white font-semibold leading-tight mb-4">
+          <div className="w-1 h-16 mb-6" style={{ background: 'linear-gradient(to bottom, #FFD700, #e6c200)' }} />
+          <h2 className="text-5xl text-white font-semibold leading-tight mb-4">
             Your Health,<br />
-            <span className="italic text-gold-light">Our Priority.</span>
+            <span className="italic" style={{ color: '#FFD700' }}>Our Priority.</span>
           </h2>
-          <p className="text-white/50 font-sans text-sm leading-relaxed max-w-xs">
+          <p className="text-white/50 text-sm leading-relaxed max-w-xs">
             Authorized personnel only. This portal is for PUP clinic
             staff and administrators.
           </p>
         </div>
 
         {/* Footer */}
-        <p className="text-white/25 text-xs font-mono tracking-widest uppercase">
+        <p className="text-white/25 text-xs tracking-widest uppercase">
           © {new Date().getFullYear()} Polytechnic University of the Philippines
         </p>
       </div>
 
-      {/* ── Right panel — form ───────────────────────────── */}
+      {/* Right panel — form */}
       <div className="flex-1 flex items-center justify-center px-8 py-14">
         <div className="w-full max-w-sm">
 
@@ -71,29 +71,29 @@ export default function Login() {
               className="w-10 h-10 object-contain"
               onError={e => { e.target.style.display = 'none' }} />
             <div>
-              <p className="font-display text-white text-lg font-semibold leading-none">PUPCare Clinic</p>
-              <p className="text-gold text-xs font-mono tracking-widest uppercase mt-0.5">Admin Portal</p>
+              <p className="text-white text-lg font-semibold leading-none">PUPCare Clinic</p>
+              <p className="text-gold text-xs tracking-widest uppercase mt-0.5">Admin Portal</p>
             </div>
           </div>
 
           {/* Back to website */}
           <div className="flex justify-end mb-4">
             <Link to="/"
-              className="text-white/70 text-sm font-sans hover:text-white transition-colors underline underline-offset-4">
+              className="text-white/70 text-sm hover:text-white transition-colors underline underline-offset-4">
               ← Back to Website
             </Link>
           </div>
 
           {/* Form card */}
-          <div className="bg-white/10 border-t-4 border-t-gold p-8 shadow-lg-card">
+          <div className="bg-white/10 border-t-4 border-t-gold p-8">
             <div className="flex items-center gap-2 mb-6">
               <Shield className="w-4 h-4 text-gold" />
-              <span className="text-xs font-mono tracking-widest uppercase text-white/60 font-semibold">
+              <span className="text-xs tracking-widest uppercase text-white/60 font-semibold">
                 Authorized Access Only
               </span>
             </div>
 
-            <h2 className="font-display text-2xl font-semibold text-white mb-1">
+            <h2 className="text-2xl font-semibold text-white mb-1">
               Admin Sign In
             </h2>
             <div className="w-8 h-px bg-gold mb-6" />
@@ -119,7 +119,7 @@ export default function Login() {
               </div>
 
               {error && (
-                <div className="border border-red-300 bg-red-50 text-red-700 text-xs font-sans px-4 py-3">
+                <div className="border border-red-300 bg-red-50 text-red-700 text-xs px-4 py-3">
                   {error}
                 </div>
               )}
