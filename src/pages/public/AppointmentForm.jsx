@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { CONCERN_TYPES, TIME_SLOTS, DEPARTMENTS } from '../../lib/constants.js'
-import { CheckCircle, ArrowLeft, User, Mail, Phone, CreditCard, Building, Calendar, Clock, Heart } from 'lucide-react'
+import { CheckCircle, ArrowLeft, User, Mail, Phone, CreditCard, Building, Calendar, Clock, Heart, AlertCircle } from 'lucide-react'
 
 const initialForm = {
   full_name: '',
@@ -21,24 +21,72 @@ const initialForm = {
 
 const steps = ['Personal Info', 'Classification', 'Schedule', 'Concern']
 
+// Validation per step
+const validateStep = (step, form) => {
+  const errors = {}
+
+  if (step === 0) {
+    if (!form.full_name.trim())       errors.full_name       = 'Full name is required.'
+    if (!form.id_number.trim())       errors.id_number       = 'ID number is required.'
+    if (!form.email.trim())           errors.email           = 'Email is required.'
+    if (!form.contact_number.trim())  errors.contact_number  = 'Contact number is required.'
+  }
+
+  if (step === 1) {
+    if (!form.department) errors.department = 'Department is required.'
+    if (form.type === 'student' && !form.year_level) errors.year_level = 'Year level is required.'
+  }
+
+  if (step === 2) {
+    if (!form.preferred_date) errors.preferred_date = 'Preferred date is required.'
+    if (!form.preferred_time) errors.preferred_time = 'Preferred time is required.'
+  }
+
+  if (step === 3) {
+    if (!form.concern_type) errors.concern_type = 'Please select a type of concern.'
+  }
+
+  return errors
+}
+
 export default function AppointmentForm() {
   const [form, setForm]       = useState(initialForm)
   const [step, setStep]       = useState(0)
+  const [errors, setErrors]   = useState({})
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [error, setError]     = useState('')
+  const [submitError, setSubmitError] = useState('')
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    // I-clear ang error ng field na binago
+    if (errors[e.target.name]) {
+      setErrors(prev => ({ ...prev, [e.target.name]: '' }))
+    }
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const handleNext = () => {
+    const stepErrors = validateStep(step, form)
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors)
+      return
+    }
+    setErrors({})
+    setStep(s => s + 1)
+  }
+
+  const handleSubmit = async () => {
+    const stepErrors = validateStep(3, form)
+    if (Object.keys(stepErrors).length > 0) {
+      setErrors(stepErrors)
+      return
+    }
+
     setLoading(true)
-    setError('')
+    setSubmitError('')
     const { error: err } = await supabase.from('appointments').insert([form])
     setLoading(false)
-    if (err) setError('Failed to submit appointment. Please try again.')
+    if (err) setSubmitError('Failed to submit appointment. Please try again.')
     else setSuccess(true)
   }
 
@@ -55,10 +103,12 @@ export default function AppointmentForm() {
             Your request has been received. We'll send a confirmation to
           </p>
           <p className="font-semibold text-maroon mb-6">{form.email}</p>
-          <p className="text-gray-400 text-xs mb-8">Please wait for our confirmation within 24 hours before visiting the clinic.</p>
+          <p className="text-gray-400 text-xs mb-8">
+            Please wait for our confirmation within 24 hours before visiting the clinic.
+          </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
-              onClick={() => { setSuccess(false); setForm(initialForm); setStep(0) }}
+              onClick={() => { setSuccess(false); setForm(initialForm); setStep(0); setErrors({}) }}
               className="btn-outline text-sm px-6 py-2.5"
             >
               Book Another
@@ -98,7 +148,7 @@ export default function AppointmentForm() {
             <div key={i} className="flex items-center flex-1">
               <div className="flex flex-col items-center">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                  i < step ? 'bg-green-500 text-white' :
+                  i < step  ? 'bg-green-500 text-white' :
                   i === step ? 'bg-maroon text-white' :
                   'bg-gray-200 text-gray-400'
                 }`}>
@@ -114,10 +164,6 @@ export default function AppointmentForm() {
             </div>
           ))}
         </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
-        )}
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
 
@@ -138,29 +184,65 @@ export default function AppointmentForm() {
                   <label className="label">Full Name *</label>
                   <div className="relative">
                     <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input name="full_name" value={form.full_name} onChange={handleChange} required className="input-field pl-9" placeholder="Juan dela Cruz" />
+                    <input
+                      name="full_name" value={form.full_name} onChange={handleChange}
+                      className={`input-field pl-9 ${errors.full_name ? 'border-red-400 focus:ring-red-200' : ''}`}
+                      placeholder="Juan dela Cruz"
+                    />
                   </div>
+                  {errors.full_name && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.full_name}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="label">ID Number *</label>
                   <div className="relative">
                     <CreditCard className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input name="id_number" value={form.id_number} onChange={handleChange} required className="input-field pl-9" placeholder="2021-00001-MN-0" />
+                    <input
+                      name="id_number" value={form.id_number} onChange={handleChange}
+                      className={`input-field pl-9 ${errors.id_number ? 'border-red-400 focus:ring-red-200' : ''}`}
+                      placeholder="2021-00001-MN-0"
+                    />
                   </div>
+                  {errors.id_number && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.id_number}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="label">Email Address *</label>
                   <div className="relative">
                     <Mail className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input name="email" type="email" value={form.email} onChange={handleChange} required className="input-field pl-9" placeholder="juan@pup.edu.ph" />
+                    <input
+                      name="email" type="email" value={form.email} onChange={handleChange}
+                      className={`input-field pl-9 ${errors.email ? 'border-red-400 focus:ring-red-200' : ''}`}
+                      placeholder="juan@pup.edu.ph"
+                    />
                   </div>
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.email}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="label">Contact Number *</label>
                   <div className="relative">
                     <Phone className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input name="contact_number" value={form.contact_number} onChange={handleChange} required className="input-field pl-9" placeholder="09XXXXXXXXX" />
+                    <input
+                      name="contact_number" value={form.contact_number} onChange={handleChange}
+                      className={`input-field pl-9 ${errors.contact_number ? 'border-red-400 focus:ring-red-200' : ''}`}
+                      placeholder="09XXXXXXXXX"
+                    />
                   </div>
+                  {errors.contact_number && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.contact_number}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -179,15 +261,16 @@ export default function AppointmentForm() {
                 </div>
               </div>
 
-              {/* Type selector */}
               <div className="mb-4">
                 <label className="label">Type *</label>
                 <div className="grid grid-cols-3 gap-2">
                   {['student', 'faculty', 'staff'].map(t => (
                     <button
-                      key={t}
-                      type="button"
-                      onClick={() => setForm(prev => ({ ...prev, type: t }))}
+                      key={t} type="button"
+                      onClick={() => {
+                        setForm(prev => ({ ...prev, type: t, year_level: '' }))
+                        setErrors(prev => ({ ...prev, year_level: '' }))
+                      }}
                       className={`py-2.5 rounded-xl text-sm font-medium border-2 transition-all capitalize ${
                         form.type === t
                           ? 'border-maroon bg-maroon text-white'
@@ -203,20 +286,36 @@ export default function AppointmentForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="label">Department / College *</label>
-                  <select name="department" value={form.department} onChange={handleChange} required className="input-field">
+                  <select
+                    name="department" value={form.department} onChange={handleChange}
+                    className={`input-field ${errors.department ? 'border-red-400 focus:ring-red-200' : ''}`}
+                  >
                     <option value="">Select department</option>
                     {DEPARTMENTS.map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
+                  {errors.department && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.department}
+                    </p>
+                  )}
                 </div>
                 {form.type === 'student' && (
                   <div>
-                    <label className="label">Year Level</label>
-                    <select name="year_level" value={form.year_level} onChange={handleChange} className="input-field">
+                    <label className="label">Year Level *</label>
+                    <select
+                      name="year_level" value={form.year_level} onChange={handleChange}
+                      className={`input-field ${errors.year_level ? 'border-red-400 focus:ring-red-200' : ''}`}
+                    >
                       <option value="">Select year</option>
                       {['1st Year','2nd Year','3rd Year','4th Year','5th Year','Graduate'].map(y => (
                         <option key={y}>{y}</option>
                       ))}
                     </select>
+                    {errors.year_level && (
+                      <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {errors.year_level}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -241,25 +340,35 @@ export default function AppointmentForm() {
                   <div className="relative">
                     <Calendar className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
-                      name="preferred_date"
-                      type="date"
-                      value={form.preferred_date}
+                      name="preferred_date" type="date" value={form.preferred_date}
                       onChange={handleChange}
-                      required
-                      className="input-field pl-9"
+                      className={`input-field pl-9 ${errors.preferred_date ? 'border-red-400 focus:ring-red-200' : ''}`}
                       min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
+                  {errors.preferred_date && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.preferred_date}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="label">Preferred Time *</label>
                   <div className="relative">
                     <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <select name="preferred_time" value={form.preferred_time} onChange={handleChange} required className="input-field pl-9">
+                    <select
+                      name="preferred_time" value={form.preferred_time} onChange={handleChange}
+                      className={`input-field pl-9 ${errors.preferred_time ? 'border-red-400 focus:ring-red-200' : ''}`}
+                    >
                       <option value="">Select time slot</option>
                       {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
+                  {errors.preferred_time && (
+                    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> {errors.preferred_time}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="mt-4 p-3 bg-blue-50 rounded-xl text-xs text-blue-600 flex items-start gap-2">
@@ -282,15 +391,16 @@ export default function AppointmentForm() {
                 </div>
               </div>
 
-              {/* Concern type pills */}
               <div className="mb-4">
                 <label className="label">Type of Concern *</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {CONCERN_TYPES.map(c => (
                     <button
-                      key={c.value}
-                      type="button"
-                      onClick={() => setForm(prev => ({ ...prev, concern_type: c.value }))}
+                      key={c.value} type="button"
+                      onClick={() => {
+                        setForm(prev => ({ ...prev, concern_type: c.value }))
+                        setErrors(prev => ({ ...prev, concern_type: '' }))
+                      }}
                       className={`py-2.5 px-3 rounded-xl text-sm font-medium border-2 transition-all text-left ${
                         form.concern_type === c.value
                           ? 'border-maroon bg-maroon/5 text-maroon'
@@ -301,15 +411,18 @@ export default function AppointmentForm() {
                     </button>
                   ))}
                 </div>
+                {errors.concern_type && (
+                  <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> {errors.concern_type}
+                  </p>
+                )}
               </div>
 
               <div>
-                <label className="label">Describe your concern</label>
+                <label className="label">Describe your concern <span className="text-gray-400">(optional)</span></label>
                 <textarea
-                  name="concern_description"
-                  value={form.concern_description}
-                  onChange={handleChange}
-                  rows={4}
+                  name="concern_description" value={form.concern_description}
+                  onChange={handleChange} rows={4}
                   className="input-field resize-none"
                   placeholder="Briefly describe your symptoms or reason for visit..."
                 />
@@ -323,6 +436,12 @@ export default function AppointmentForm() {
                 <p><span className="text-gray-400">Date:</span> {form.preferred_date} at {form.preferred_time}</p>
                 <p><span className="text-gray-400">Type:</span> <span className="capitalize">{form.type} · {form.department}</span></p>
               </div>
+
+              {submitError && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                  {submitError}
+                </div>
+              )}
             </div>
           )}
 
@@ -330,7 +449,7 @@ export default function AppointmentForm() {
           <div className="flex items-center justify-between mt-6 pt-5 border-t border-gray-100">
             <button
               type="button"
-              onClick={() => setStep(s => s - 1)}
+              onClick={() => { setStep(s => s - 1); setErrors({}) }}
               disabled={step === 0}
               className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
@@ -340,7 +459,7 @@ export default function AppointmentForm() {
             {step < steps.length - 1 ? (
               <button
                 type="button"
-                onClick={() => setStep(s => s + 1)}
+                onClick={handleNext}
                 className="btn-primary text-sm px-6 py-2.5"
               >
                 Next →
@@ -349,7 +468,7 @@ export default function AppointmentForm() {
               <button
                 type="button"
                 onClick={handleSubmit}
-                disabled={loading || !form.concern_type}
+                disabled={loading}
                 className="btn-primary text-sm px-6 py-2.5 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? 'Submitting...' : 'Submit Appointment'}

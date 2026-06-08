@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import AdminSidebar from '../../components/AdminSidebar.jsx'
-import { supabase } from '../../lib/supabase.js'
+import AdminSidebar from '../../../components/AdminSidebar.jsx'
+import { supabase } from '../../../lib/supabase.js'
+import { CLINIC_CONCERNS } from '../../../lib/constants.js'
 import { Search, Filter, X, Calendar, Clock, User, Phone, Mail, BookOpen } from 'lucide-react'
 
 const STATUS_OPTIONS = ['all', 'pending', 'approved', 'completed', 'rejected', 'cancelled']
-
 const STATUS_STYLE = {
   pending:   'bg-yellow-100 text-yellow-800',
   approved:  'bg-green-100 text-green-800',
@@ -14,20 +13,7 @@ const STATUS_STYLE = {
   cancelled: 'bg-gray-100 text-gray-600',
 }
 
-const FILTER_MAP = {
-  medical: 'medical',
-  dental:  'dental',
-  mental:  'mental_health',
-}
-
-const TYPE_LABEL = {
-  medical: '🩺 Medical Appointments',
-  dental:  '🦷 Dental Appointments',
-  mental:  '🧠 Mental Health Appointments',
-}
-
-export default function Appointments() {
-  const { type }                        = useParams()
+export default function DentalAppointments() {
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading]           = useState(true)
   const [search, setSearch]             = useState('')
@@ -37,50 +23,28 @@ export default function Appointments() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  useEffect(() => {
-    setSelected(null)
-    setSearch('')
-    setStatusFilter('all')
+  useEffect(() => { fetchAppointments() }, [])
 
-    const load = async () => {
-      setLoading(true)
-      let query = supabase
-        .from('appointments')
-        .select('*')
-        .order('preferred_date', { ascending: false })
-
-      if (FILTER_MAP[type]) {
-        query = query.eq('concern_type', FILTER_MAP[type])
-      }
-
-      const { data } = await query
-      if (data) setAppointments(data)
-      setLoading(false)
-    }
-
-    load()
-  }, [type])
+  const fetchAppointments = async () => {
+    const { data } = await supabase
+      .from('appointments')
+      .select('*')
+      .in('concern_type', CLINIC_CONCERNS.dental)
+      .order('preferred_date', { ascending: false })
+    if (data) setAppointments(data)
+    setLoading(false)
+  }
 
   const updateStatus = async (id, newStatus) => {
     setUpdating(true)
     await supabase.from('appointments').update({ status: newStatus }).eq('id', id)
-
-    // Refresh
-    let query = supabase
-      .from('appointments')
-      .select('*')
-      .order('preferred_date', { ascending: false })
-    if (FILTER_MAP[type]) query = query.eq('concern_type', FILTER_MAP[type])
-    const { data } = await query
-    if (data) setAppointments(data)
-
+    await fetchAppointments()
     setSelected(prev => prev?.id === id ? { ...prev, status: newStatus } : prev)
     setUpdating(false)
   }
 
   const todayAppts   = appointments.filter(a => a.preferred_date === today)
   const pendingCount = appointments.filter(a => a.status === 'pending').length
-
   const filtered = appointments.filter(a => {
     const matchSearch = [a.full_name, a.id_number, a.email]
       .some(v => v?.toLowerCase().includes(search.toLowerCase()))
@@ -91,18 +55,16 @@ export default function Appointments() {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
-
       <main className="flex-1 ml-64 p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">{TYPE_LABEL[type] || 'Appointments'}</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage appointment requests</p>
+          <h1 className="text-2xl font-bold text-gray-800">🦷 Dental Appointments</h1>
+          <p className="text-gray-500 text-sm mt-1">Manage dental clinic appointment requests</p>
         </div>
 
-        {/* Quick stats */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-maroon/10 flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-maroon" />
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-800">{todayAppts.length}</p>
@@ -124,41 +86,34 @@ export default function Appointments() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-800">{appointments.length}</p>
-              <p className="text-xs text-gray-500">Total</p>
+              <p className="text-xs text-gray-500">Total Dental Appointments</p>
             </div>
           </div>
         </div>
 
-        {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
+            <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="Search by name, ID, or email..."
-              className="input-field pl-9"
-            />
+              className="input-field pl-9" />
           </div>
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-400" />
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="input-field w-auto">
               {STATUS_OPTIONS.map(s => (
-                <option key={s} value={s}>
-                  {s === 'all' ? 'All Status' : s.charAt(0).toUpperCase() + s.slice(1)}
-                </option>
+                <option key={s} value={s}>{s === 'all' ? 'All Status' : s.charAt(0).toUpperCase() + s.slice(1)}</option>
               ))}
             </select>
           </div>
         </div>
 
         <div className="flex gap-5">
-          {/* Table */}
           <div className={`bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto ${selected ? 'flex-1' : 'w-full'}`}>
             {loading ? (
               <p className="text-sm text-gray-400 p-6">Loading...</p>
             ) : filtered.length === 0 ? (
-              <p className="text-sm text-gray-400 p-6">No appointments found.</p>
+              <p className="text-sm text-gray-400 p-6">No dental appointments found.</p>
             ) : (
               <table className="w-full text-sm">
                 <thead>
@@ -171,11 +126,8 @@ export default function Appointments() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filtered.map(a => (
-                    <tr
-                      key={a.id}
-                      onClick={() => setSelected(selected?.id === a.id ? null : a)}
-                      className={`cursor-pointer hover:bg-gray-50 transition-colors ${selected?.id === a.id ? 'bg-maroon/5' : ''}`}
-                    >
+                    <tr key={a.id} onClick={() => setSelected(selected?.id === a.id ? null : a)}
+                      className={`cursor-pointer hover:bg-gray-50 transition-colors ${selected?.id === a.id ? 'bg-maroon/5' : ''}`}>
                       <td className="px-5 py-3">
                         <p className="font-medium text-gray-800">{a.full_name}</p>
                         <p className="text-xs text-gray-400">{a.id_number}</p>
@@ -199,7 +151,6 @@ export default function Appointments() {
             )}
           </div>
 
-          {/* Detail Panel */}
           {selected && (
             <div className="w-72 shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm p-5 self-start">
               <div className="flex items-center justify-between mb-4">
@@ -208,7 +159,6 @@ export default function Appointments() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
-
               <div className="space-y-2.5 text-sm mb-4">
                 <div className="flex items-start gap-2">
                   <User className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
@@ -230,7 +180,6 @@ export default function Appointments() {
                   <p className="text-gray-600 text-xs">{selected.preferred_date} at {selected.preferred_time}</p>
                 </div>
               </div>
-
               <div className="border-t pt-3 mb-4 space-y-1.5 text-xs text-gray-500">
                 {[
                   ['Type', selected.type],
@@ -250,13 +199,11 @@ export default function Appointments() {
                   </div>
                 )}
               </div>
-
               <div className="mb-4">
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[selected.status]}`}>
                   {selected.status}
                 </span>
               </div>
-
               <div className="space-y-2">
                 {selected.status === 'pending' && (
                   <>

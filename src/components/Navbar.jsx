@@ -26,7 +26,7 @@ export default function Navbar() {
           to="/admin/login"
           className="bg-gold text-maroon font-bold px-4 py-2 rounded-lg hover:bg-gold-dark transition-colors text-sm shadow"
         >
-          Admin Portal
+          Login Portal
         </Link>
       </div>
     </nav>
