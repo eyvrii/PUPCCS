@@ -38,6 +38,20 @@ export default function DentalAppointments() {
   const updateStatus = async (id, newStatus) => {
     setUpdating(true)
     await supabase.from('appointments').update({ status: newStatus }).eq('id', id)
+
+    if (newStatus === 'approved') {
+      const appt = appointments.find(a => a.id === id)
+      await supabase.functions.invoke('send-approval-email', {
+        body: {
+          email:          appt.email,
+          full_name:      appt.full_name,
+          preferred_date: appt.preferred_date,
+          preferred_time: appt.preferred_time,
+          concern_type:   appt.concern_type,
+        }
+      })
+    }
+
     await fetchAppointments()
     setSelected(prev => prev?.id === id ? { ...prev, status: newStatus } : prev)
     setUpdating(false)
@@ -53,7 +67,7 @@ export default function DentalAppointments() {
   })
 
   return (
-    <div className="flex min-h-screen bg-gray-50 flex">
+    <div className="flex min-h-screen bg-gray-50">
       <AdminSidebar />
       <main className="flex-1 p-8">
         <div className="mb-6">
