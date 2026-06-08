@@ -213,7 +213,7 @@ export default function AdminSidebar() {
             </div>
             <h3 className="font-bold text-gray-800 text-base text-center mb-1">Sign Out</h3>
             <p className="text-gray-500 text-sm text-center mb-5">
-              Are you sure you want to sign out of the admin portal?
+              Are you sure you want to sign out?
             </p>
             <div className="flex gap-2">
               <button

@@ -89,10 +89,10 @@ export default function Appointments() {
   })
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 flex">
       <AdminSidebar />
 
-      <main className="flex-1 ml-64 p-8">
+      <main className="flex-1 p-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-800">{TYPE_LABEL[type] || 'Appointments'}</h1>
           <p className="text-gray-500 text-sm mt-1">Manage appointment requests</p>
