@@ -4,17 +4,28 @@ export const TIME_SLOTS = [
 ]
 
 export const CONCERN_TYPES = [
-  { value: 'medical',       label: 'Medical Consultation' },
-  { value: 'dental',        label: 'Dental' },
-  { value: 'mental_health', label: 'Mental Health / Counseling' },
-  { value: 'other',         label: 'Other' },
+  // Medical
+  { value: 'medical',       label: 'Medical Consultation',       clinic: 'medical' },
+  { value: 'first_aid',     label: 'First Aid & Emergency',      clinic: 'medical' },
+  { value: 'medicines',     label: 'Medicines & Supplies',       clinic: 'medical' },
+  // Dental
+  { value: 'dental',        label: 'Dental Services',            clinic: 'dental'  },
+  // Mental Health
+  { value: 'mental_health', label: 'Mental Health / Counseling', clinic: 'mental'  },
 ]
 
 export const CONCERN_LABEL = {
-  medical:       'Medical',
-  dental:        'Dental',
+  medical:       'Medical Consultation',
+  first_aid:     'First Aid & Emergency',
+  medicines:     'Medicines & Supplies',
+  dental:        'Dental Services',
   mental_health: 'Mental Health',
-  other:         'Other',
+}
+
+export const CLINIC_CONCERNS = {
+  medical: ['medical', 'first_aid', 'medicines'],
+  dental:  ['dental'],
+  mental:  ['mental_health'],
 }
 
 export const STATUS_BADGE_CLASS = {
@@ -34,9 +45,13 @@ export const STATUS_DOT = {
 }
 
 export const DEPARTMENTS = [
-  'CCIS', 'CAFA', 'CAL', 'CBA', 'CE', 'CET',
-  'CHK', 'CLAC', 'COC', 'CS', 'Graduate School',
-  'Admin Office', 'Other',
+  'Civil Engineering (BSCE)',
+  'Computer Engineering (BSCpE)',
+  'Electrical Engineering (BSEE)',
+  'Electronics Engineering (BSECE)',
+  'Industrial Engineering (BSIE)',
+  'Mechanical Engineering (BSME)',
+  'Railway Engineering (BSRE)',
 ]
 
 export const YEAR_LEVELS = [
