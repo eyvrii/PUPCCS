@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import AdminSidebar from '../../../components/AdminSidebar.jsx'
 import { supabase } from '../../../lib/supabase.js'
 import { CLINIC_CONCERNS } from '../../../lib/constants.js'
+import emailjs from '@emailjs/browser'
 import { Search, Filter, X, Calendar, Clock, User, Phone, Mail, BookOpen } from 'lucide-react'
 
 const STATUS_OPTIONS = ['all', 'pending', 'approved', 'completed', 'rejected', 'cancelled']
@@ -37,19 +38,32 @@ export default function DentalAppointments() {
 
   const updateStatus = async (id, newStatus) => {
     setUpdating(true)
+
+    const toNotify = appointments.find(a => a.id === id)
+
     await supabase.from('appointments').update({ status: newStatus }).eq('id', id)
 
-    if (newStatus === 'approved') {
-      const appt = appointments.find(a => a.id === id)
-      await supabase.functions.invoke('send-approval-email', {
-        body: {
-          email:          appt.email,
-          full_name:      appt.full_name,
-          preferred_date: appt.preferred_date,
-          preferred_time: appt.preferred_time,
-          concern_type:   appt.concern_type,
-        }
-      })
+    if ((newStatus === 'approved' || newStatus === 'completed') && toNotify) {
+      try {
+        const templateId = newStatus === 'approved'
+          ? import.meta.env.VITE_EMAILJS_TEMPLATE_ID
+          : import.meta.env.VITE_EMAILJS_COMPLETED_TEMPLATE_ID
+
+        await emailjs.send(
+          import.meta.env.VITE_EMAILJS_SERVICE_ID,
+          templateId,
+          {
+            to_email:       toNotify.email,
+            full_name:      toNotify.full_name,
+            preferred_date: toNotify.preferred_date,
+            preferred_time: toNotify.preferred_time,
+            concern_type:   toNotify.concern_type?.replace(/_/g, ' '),
+          },
+          import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        )
+      } catch (e) {
+        console.error('EmailJS error:', e)
+      }
     }
 
     await fetchAppointments()
@@ -74,7 +88,6 @@ export default function DentalAppointments() {
           <h1 className="text-2xl font-bold text-gray-800">🦷 Dental Appointments</h1>
           <p className="text-gray-500 text-sm mt-1">Manage dental clinic appointment requests</p>
         </div>
-
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
@@ -104,7 +117,6 @@ export default function DentalAppointments() {
             </div>
           </div>
         </div>
-
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -121,7 +133,6 @@ export default function DentalAppointments() {
             </select>
           </div>
         </div>
-
         <div className="flex gap-5">
           <div className={`bg-white rounded-xl border border-gray-100 shadow-sm overflow-x-auto ${selected ? 'flex-1' : 'w-full'}`}>
             {loading ? (
@@ -164,7 +175,6 @@ export default function DentalAppointments() {
               </table>
             )}
           </div>
-
           {selected && (
             <div className="w-72 shrink-0 bg-white rounded-xl border border-gray-100 shadow-sm p-5 self-start">
               <div className="flex items-center justify-between mb-4">
